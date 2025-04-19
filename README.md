@@ -7,9 +7,18 @@ A PoC python script that encodes a file into a 720p 5fps QR code video, uses a H
 
 ## Usage
 ### encoder.py (On Source PC)
+```
 python encoder.py <inputfile.zip> <output.mkv>
+```
 ### decoder.py (On Destination PC)
-python decoder.py <output.mp4> <inputfile.zip>
+```
+python decoder.py <output.mp4>
+```
+The filename will be restored from headers of the video. Or
+```
+python decoder.py <output.mp4> <outputfile.zip>
+```
+The filename will be forced to be <outputfile.zip>
 
 ### (Optional) capture_video.cmd (on Destination PC)
 To programmatically stop OBS and start ffmpeg (I needed it to apply a timeout to make sure HDMI Capture USB usage is freed by OBS)
