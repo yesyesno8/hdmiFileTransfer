@@ -47,6 +47,8 @@ Make sure you remove overlay screen options from VLC to make it easy.
 Go to Tools > Preferences and untick:
 -	Enabled On Screen Display
 -	Show media title on Video Start
+
+
 This is needed because at this first version of the script, data is written in raw (1px = 1 bit), without any redundancy nor error correction.
 On destination PC, have these tools ready:
 -	ffmpeg: used to capture the incoming video of USB HDMI Capture
