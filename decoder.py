@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import datetime
 import sys
+import hashlib
 
 def detect_start_marker(frame, checkerboard_pattern):
     """
@@ -65,7 +66,7 @@ def binary_video_to_file(input_video, output_file, border_size=10, threshold=128
             print("End marker detected!")
             if not handled:
                 binary_frame = (previous_data_frame > threshold).astype(np.uint8)
-                binary_data.append(previous_data_frame.flatten())
+                binary_data.append(binary_frame.flatten())
                 handled = True
             break  # Stop processing after the end marker
 
@@ -75,7 +76,7 @@ def binary_video_to_file(input_video, output_file, border_size=10, threshold=128
             if previous_data_frame is not None:
                 data_correlation = np.mean(cropped_frame - previous_data_frame)
                 ###print(f"""Correlation : {data_correlation}""")
-                if(data_correlation>30):
+                if(data_correlation>5):
                     if(not handled):
                         binary_frame = (previous_data_frame > threshold).astype(np.uint8)
                         binary_data.append(binary_frame.flatten())
@@ -108,33 +109,58 @@ def binary_video_to_file(input_video, output_file, border_size=10, threshold=128
     # Convert binary data back to bytes
     byte_array = np.packbits(binary_array)
 
+    # Initialize headers cursor
+    cursor = 0
+    file_size_length = 4
     # Extract the file size from the first 4 bytes (header)
-    file_size = int.from_bytes(byte_array[:4], byteorder="little")
+    file_size = int.from_bytes(byte_array[cursor:cursor+file_size_length], byteorder="little")
     print(f"Original file size: {file_size} bytes")
     
-
+    cursor = cursor + file_size_length
     # Debug: Verify the file size is reasonable
     if file_size == 4294967295:  # 0xFFFFFFFF, indicates a corrupted header
         raise Exception("Corrupted file size header detected!")
     
     # Extract the filename length (1 byte)
-    filename_length = int(byte_array[4])
+    filename_length = int(byte_array[cursor])
+    
+    # Advance 1 byte
+    cursor = cursor + 1
 
     # Extract the filename
     try:
-        filename = byte_array[5:5 + filename_length].tobytes().decode('utf-8')
+        filename = byte_array[cursor:cursor + filename_length].tobytes().decode('utf-8')
     except:
         raise Exception("Corrupted file name header detected!")
-        
-        
-    ###print(f""" File size : {file_size}""")
-    ###print(f""" File name : {filename}""")
-    ###print(f""" file name length : {filename_length}""")
 
+    # Advance cursor with filename_length
+    cursor = cursor + filename_length
+    file_md5_length = 16
 
+    # Extract the file MD5 hash
+    try:
+        file_md5_hash = byte_array[cursor:cursor+file_md5_length].tobytes().hex()
+    except:
+        raise Exception("Corrupted file hash header detected!")
+        
+    ###print(f"""File size : {file_size}""")
+    ###print(f"""File name : {filename}""")
+    ###print(f"""File name length : {filename_length}""")
+    ###print(f"""File MD5 Hash : {file_md5_hash}""")
+
+    # Advance custor with file_md5_length
+    cursor = cursor + file_md5_length
+    
     # Extract the file data (after the filename)
-    print(f""" Extracting data from {5 + filename_length} to {5 + filename_length + file_size}""")
-    file_data = byte_array[5 + filename_length:5 + filename_length + file_size]
+    print(f"""Extracting data from {cursor} to {cursor + file_size}""")
+    file_data = byte_array[cursor:cursor + file_size]
+    calculated_md5 = hashlib.md5(file_data).hexdigest()
+    if(calculated_md5 == file_md5_hash):
+        print(f"Success!! Received and calculated MD5 hashes match : {calculated_md5}")
+    else:
+        print(f"Error!! MD5 mismatch with the received hash.")
+        print(f"Received MD5 : {file_md5_hash}")
+        print(f"Calculated MD5 : {calculated_md5}")
     
     if output_file is None:
         output_file = f"""received_{filename}"""
