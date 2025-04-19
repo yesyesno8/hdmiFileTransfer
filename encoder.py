@@ -3,10 +3,17 @@ import cv2
 import datetime
 import sys
 import os
+import hashlib
 
 def file_to_binary_video(input_file, output_video, frame_width=1280, frame_height=720, border_size=10):
     # Extract the filename from the input_file path
     filename = os.path.basename(input_file)
+    
+    # Calculate MD5 Hash of file
+    with open(filename, "rb") as f:
+        file_hash = hashlib.md5()
+        while chunk := f.read(8192):
+            file_hash.update(chunk)
     
     # Convert the filename to bytes
     filename_bytes = filename.encode('utf-8')
@@ -23,13 +30,20 @@ def file_to_binary_video(input_file, output_video, frame_width=1280, frame_heigh
 
     # Get the size of the original file (in bytes)
     file_size = len(data_array)
-
+    
     # Convert the file size to a 4-byte header (32-bit unsigned integer)
     file_size_header = np.array([file_size], dtype=np.uint32).tobytes()
+    
+    # Convert the file hash to a 16-byte header
+    file_hash_header = np.array([file_hash.digest()]).tobytes()
+
 
     # Combine the header and the file data
-    data_with_header = np.frombuffer(file_size_header + filename_header + data, dtype=np.uint8)
-    print(len(data_with_header))
+    data_with_header = np.frombuffer(file_size_header + filename_header + file_hash_header + data, dtype=np.uint8)
+
+    print(f"""Total data with header : {len(data_with_header)} bytes.""")
+    print(f"""File size : {file_size} bytes.""")
+    print(f"""File hash : {file_hash.hexdigest()}""")
 
     # Convert the data to binary (0s and 1s)
     binary_data = np.unpackbits(data_with_header)
