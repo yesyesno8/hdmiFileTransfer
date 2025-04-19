@@ -72,8 +72,10 @@ The decoder script does the following :
 
 ## Procedure:
 -	Compress all the files you need in a zip file on Source PC (split it into chucks of 200MB if needed and transmit every chunk separately)
--	Run the decoder.py to generate an output.mkv video of the file with the command:
-python decoder.py inputfile.zip output.mkv
+-	Run the encoder.py to generate an output.mkv video of the file with the command:
+```
+python encoder.py inputfile.zip output.mkv
+```
 -	Plug the HDMI device, HDMI end into Source PC, USB end into Destination PC.
 -	On destination PC: Open OBS with HDMI Capture as input to display the incoming signal
 -	On source PC: Open the output.mkv with VLC, pause with Space bar, go back to beginning of video with arrow left keyboard key, move the VLC window to the “second monitor”, put the video full screen by double click on the video, move the mouse cursor out of the “second monitor”, and wait for all overlays to disappear.
@@ -85,10 +87,14 @@ frame=	16	fps=6.2	q=29.0	size=	512KiB	time=00:00:00.46	bitrate=4494.7kbits/s	spe
 -	On Source PC: resume VLC by clicking Space bar
 -	On destination PC: When the video transmission finishes, click ‘q’ to exit ffmpeg
 -	On destination PC: run the python decoder script :
-python decoder.py <recorded_output.mp4> inputfile.zip
--	If all is good your file is inputfile.zip on destination PC
+```
+python decoder.py <recorded_output.mp4>
+```
+-	If all is good your file is written into destination PC
 -	You can checksum file on both Source and Destination PC with the command:
-certutil -hashfile inputfile.zip
+```
+certutil -hashfile inputfile.zip MD5
+```
 and verify that the hash matches.
 
 ## Advantages:
